@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimus Prime Chatbot</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1a202c;
+            color: #63b3ed;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: #2d3748;
+            padding: 1rem;
+            border-bottom: 2px solid #4299e1;
+        }
+
+        h1 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+        }
+
+        .autobot-logo {
+            width: 2rem;
+            height: 2rem;
+            margin-right: 0.5rem;
+        }
+
+        main {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            font-size: 22px;
+            border-radius: 0.25rem;
+        }
+
+        .user-message {
+            background-color: #2a4365;
+        }
+
+        .bot-message {
+            background-color: #2d3748;
+        }
+
+        .typing {
+            display: inline-block;
+            overflow: hidden;
+            animation: typing 1s steps(5, end) infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 15px }
+        }
+
+        form {
+            display: flex;
+            padding: 1.2rem;
+            background-color: #2d3748;
+            border-top: 2px solid #4299e1;
+        }
+
+        input {
+            font-size: 1.2rem;
+            flex-grow: 1;
+            padding: 0.9rem;
+            background-color: #4a5568;
+            color: #63b3ed;
+            border: 1px solid #4299e1;
+            border-radius: 0.25rem;
+            margin-right: 0.5rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            background-color: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #2c5282;
+        }
+
+      
+        .cursor::after {
+            content: '|';
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { opacity: 1 }
+            50% { opacity: 0 }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>
+            <svg class="autobot-logo" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,0L3,8v8l9,8l9-8V8L12,0z M12,2.8l6.4,5.7L12,14.2L5.6,8.5L12,2.8z M5,9.8l7,6.2v5.8l-7-6.2V9.8z M13,21.8v-5.8l7-6.2 v5.8L13,21.8z"/>
+            </svg>
+            Optimus Prime
+        </h1>
+    </header>
+    <main id="chat-container"></main>
+    <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Enter your message, human..." class="glow cursor">
+        <button type="submit" onclick="sendMessage()">SEND</button>
+    </form>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        
+        // Function to add messages to the chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', isUser ? 'user-message' : 'bot-message');
+            messageDiv.innerHTML = `<strong>${isUser ? 'Human' : 'Optimus Prime'}:</strong> ${content}`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Function to simulate typing
+        function simulateTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.classList.add('message', 'bot-message');
+            typingDiv.innerHTML = '<strong>Optimus Prime:</strong> <span class="typing">....</span>';
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return typingDiv;
+        }
+        
+        // Function to handle sending messages
+        function sendMessage() {
+            const userMessage = userInput.value.trim(); // Get user input
+            if (userMessage) {
+                addMessage(userMessage, true); // Display user's message
+                userInput.value = ''; // Clear input field
+        
+                const typingDiv = simulateTyping(); // Simulate typing indicator
+        
+                // Simulate delay for typing effect (e.g., 2 seconds)
+                setTimeout(() => {
+                    // Remove the typing indicator
+                    chatContainer.removeChild(typingDiv);
+        
+                    // Fetch bot response from server
+                    fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: userMessage }),
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            console.log('Server Response:', data); // Debugging step
+                            addMessage(data.response); // Display bot's response
+                        })
+                        .catch((error) => {
+                            chatContainer.removeChild(typingDiv); // Remove typing indicator
+                            addMessage("Sorry, there was an error connecting to Optimus Prime."); // Error message
+                            console.error('Error:', error);
+                        });
+                }, 2000); // Delay response by 2 seconds (adjust as needed)
+            }
+        }
+        
+        // Add event listener to the form
+        chatForm.addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevent default form submission
+            sendMessage(); // Call sendMessage when the form is submitted
+        });
+        </script>
+        
+</body>
+</html>
